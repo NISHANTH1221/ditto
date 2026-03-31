@@ -6,12 +6,12 @@ edition.workspace = true
 # ── feature flags ─────────────────────────────────────────────────────────────
 # Enable only the client libraries your service actually uses.
 [features]
-default      = ["http", "redis", "sql", "diesel", "tokio-compat"]
+default      = ["http", "redis", "tokio-compat"]
 http         = []
 redis        = []
-sql          = []
-diesel       = []
-bb8-diesel   = ["dep:async-bb8-diesel", "dep:bb8"]
+sql          = ["dep:sqlx"]
+diesel       = ["dep:diesel", "dep:diesel-async"]
+bb8-diesel   = ["diesel", "dep:async-bb8-diesel", "dep:bb8"]
 tokio-compat = []
 
 [dependencies]
@@ -32,16 +32,16 @@ reqwest-middleware  = "0.2"
 # Redis
 redis = { version = "0.23", features = ["tokio-comp"] }
 
-# SQL
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono", "json"] }
+# SQL — optional, enabled by the "sql" feature
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono", "json"], optional = true }
 
-# Diesel
-diesel = { version = "2.3.5", features = ["postgres", "serde_json", "uuid", "chrono"] }
-diesel-async = { version = "0.8", features = ["postgres", "deadpool"] }
+# Diesel — optional, enabled by the "diesel" feature
+diesel       = { version = "2.2.10", features = ["postgres", "serde_json", "uuid", "chrono"], optional = true }
+diesel-async = { version = "0.5",    features = ["postgres", "deadpool"], optional = true }
 
-# async_bb8_diesel
-async-bb8-diesel = { version = "0.3", optional = true }
-bb8 = { version = "0.9", optional = true }
+# bb8 pool — optional, enabled by the "bb8-diesel" feature
+async-bb8-diesel = { version = "0.2", optional = true }
+bb8              = { version = "0.8", optional = true }
 
 [dev-dependencies]
 replay-store = { path = "../replay-store" }

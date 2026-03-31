@@ -16,6 +16,7 @@ required-features = ["audit"]
 default          = ["axum-middleware"]
 axum-middleware  = []       # axum is always a dep; this gates the re-export
 actix-middleware = ["dep:actix-web"]
+sql              = ["dep:sqlx", "dep:diesel", "dep:diesel-async"]
 audit            = ["dep:syn", "dep:walkdir", "dep:prettyplease", "dep:clap"]
 
 [dependencies]
@@ -37,16 +38,15 @@ task-local-extensions   = "0.1"
 reqwest                 = { version = "0.11", features = ["json"] }
 reqwest-middleware       = "0.2"
 
-axum = "0.6"
+axum = "0.7"
 http = "0.2"
 
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono", "json"] }
+# SQL — optional, enabled by the "sql" feature
+sqlx         = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono", "json"], optional = true }
+diesel       = { version = "2.2.10", features = ["postgres", "serde_json", "uuid", "chrono"], optional = true }
+diesel-async = { version = "0.5",    features = ["postgres", "deadpool"], optional = true }
 
-# Diesel
-diesel = { version = "2.3.5", features = ["postgres", "serde_json", "uuid", "chrono"] }
-diesel-async = { version = "0.8", features = ["postgres", "deadpool"] }
-
-tonic        = "0.10"
+tonic        = "0.12"
 tower        = "0.4"
 base64       = "0.21"
 bytes        = "1"
