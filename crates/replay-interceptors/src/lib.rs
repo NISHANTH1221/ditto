@@ -1,5 +1,6 @@
 #[cfg(feature = "sql")]
 pub mod diesel;
+#[cfg(feature = "grpc")]
 pub mod grpc;
 pub mod harness;
 pub mod http_client;
@@ -9,6 +10,7 @@ pub mod redis_client;
 
 #[cfg(feature = "sql")]
 pub use diesel::DieselReplayExecutor;
+#[cfg(feature = "grpc")]
 pub use grpc::{ReplayGrpcLayer, ReplayGrpcService};
 pub use harness::{HarnessConfig, HarnessStatus, ReplayHarness, ReplayResult};
 pub use http_client::{make_http_client, ReplayMiddleware};

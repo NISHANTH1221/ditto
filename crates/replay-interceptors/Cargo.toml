@@ -17,6 +17,7 @@ default          = ["axum-middleware"]
 axum-middleware  = []       # axum is always a dep; this gates the re-export
 actix-middleware = ["dep:actix-web"]
 sql              = ["dep:diesel", "dep:diesel-async"]
+grpc             = ["dep:tonic", "dep:tower", "dep:http-body"]
 audit            = ["dep:syn", "dep:walkdir", "dep:prettyplease", "dep:clap"]
 
 [dependencies]
@@ -45,8 +46,9 @@ http = "0.2"
 diesel       = { version = "2.2.10", features = ["postgres", "serde_json", "uuid", "chrono"], optional = true }
 diesel-async = { version = "0.5",    features = ["postgres", "deadpool"], optional = true }
 
-tonic        = "0.12"
-tower        = "0.4"
+tonic        = { version = "0.12", optional = true }
+tower        = { version = "0.4", optional = true }
+http-body    = { version = "0.4", optional = true }
 base64       = "0.21"
 bytes        = "1"
 futures-util = "0.3"
