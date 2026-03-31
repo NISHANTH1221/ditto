@@ -7,10 +7,8 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use axum::body::{boxed, BoxBody, Full};
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 use http::Request;
-use http_body::Body as HttpBody;
 use replay_core::{
     context::{with_recording_id, MockContext, MOCK_CTX},
     next_interaction_slot, CallStatus, CallType,
@@ -31,7 +29,7 @@ use uuid::Uuid;
 ///     .route("/", get(handler))
 ///     .layer(axum::middleware::from_fn(recording_middleware));
 /// ```
-pub async fn recording_middleware(req: Request<Body>, next: Next<Body>) -> Response {
+pub async fn recording_middleware(req: Request<Body>, next: Next) -> Response {
     let mode = current_mode();
 
     if matches!(mode, ReplayMode::Off) {
@@ -100,7 +98,7 @@ pub fn current_service_name() -> String {
 pub async fn recording_middleware_with_store(
     State(store): State<Arc<dyn InteractionStore>>,
     req: Request<Body>,
-    next: Next<Body>,
+    next: Next,
 ) -> Response {
     let mode = current_mode();
 
@@ -218,7 +216,7 @@ pub async fn recording_middleware_with_store(
                 let _ = store.write(&interaction).await;
 
                 // Reconstruct response with the buffered body.
-                Response::from_parts(parts, boxed(Full::from(body_bytes)))
+                Response::from_parts(parts, Body::from(body_bytes))
             } else {
                 resp
             }
@@ -229,32 +227,18 @@ pub async fn recording_middleware_with_store(
     .await
 }
 
-/// Drain the request `Body` (axum 0.6 = hyper::Body, which is Unpin) into `Bytes`.
-async fn collect_request_body(mut body: Body) -> Bytes {
-    use std::pin::Pin;
-    let mut buf = BytesMut::new();
-    while let Some(result) =
-        std::future::poll_fn(|cx| Pin::new(&mut body).poll_data(cx)).await
-    {
-        if let Ok(chunk) = result {
-            buf.extend_from_slice(&chunk);
-        }
-    }
-    buf.freeze()
+/// Drain a request `Body` into `Bytes` (axum 0.7).
+async fn collect_request_body(body: Body) -> Bytes {
+    axum::body::to_bytes(body, usize::MAX)
+        .await
+        .unwrap_or_default()
 }
 
-/// Drain a `BoxBody` into `Bytes` without requiring `Send`.
-async fn collect_body(mut body: BoxBody) -> Bytes {
-    use std::pin::Pin;
-    let mut buf = BytesMut::new();
-    while let Some(result) =
-        std::future::poll_fn(|cx| Pin::new(&mut body).poll_data(cx)).await
-    {
-        if let Ok(chunk) = result {
-            buf.extend_from_slice(&chunk);
-        }
-    }
-    buf.freeze()
+/// Drain a response `Body` into `Bytes` (axum 0.7).
+async fn collect_body(body: Body) -> Bytes {
+    axum::body::to_bytes(body, usize::MAX)
+        .await
+        .unwrap_or_default()
 }
 
 fn extract_header_uuid(req: &Request<Body>, name: &str) -> Option<Uuid> {
